@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rowbot - C2 Rower Display Board</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            padding: 20px 0;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .status-bar {
+            background: rgba(255,255,255,0.1);
+            padding: 10px 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            backdrop-filter: blur(10px);
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #4ade80;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .rowers-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .rower-card {
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .rower-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.2);
+        }
+
+        .rower-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid rgba(255,255,255,0.2);
+        }
+
+        .rower-name {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .rower-id {
+            background: rgba(255,255,255,0.2);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        .metric {
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 10px;
+        }
+
+        .metric-label {
+            font-size: 0.85rem;
+            opacity: 0.8;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .metric-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+        }
+
+        .metric-large {
+            grid-column: span 2;
+        }
+
+        .metric-large .metric-value {
+            font-size: 2.5rem;
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 60px 20px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+
+        .no-data h2 {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+        }
+
+        .no-data p {
+            opacity: 0.8;
+        }
+
+        .controls {
+            background: rgba(255,255,255,0.1);
+            padding: 20px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            margin-bottom: 20px;
+        }
+
+        .controls h3 {
+            margin-bottom: 15px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            background: rgba(255,255,255,0.2);
+            color: #fff;
+            border: 2px solid rgba(255,255,255,0.3);
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            background: rgba(255,255,255,0.3);
+            border-color: rgba(255,255,255,0.5);
+            transform: translateY(-2px);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .last-update {
+            font-size: 0.85rem;
+            opacity: 0.7;
+            margin-top: 10px;
+        }
+
+        footer {
+            text-align: center;
+            padding: 20px;
+            opacity: 0.7;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🚣 Rowbot</h1>
+            <div class="subtitle">Realtime Display Board for C2 Rowers</div>
+        </header>
+
+        <div class="status-bar">
+            <div class="status-indicator">
+                <div class="status-dot"></div>
+                <span>Connected</span>
+            </div>
+            <div>
+                <span id="rowerCount">0 Rowers</span>
+            </div>
+            <div>
+                <span id="lastRefresh">Never</span>
+            </div>
+        </div>
+
+        <div class="controls">
+            <h3>Demo Controls (Simulation)</h3>
+            <div class="button-group">
+                <button onclick="addSimulatedRower()">➕ Add Simulated Rower</button>
+                <button onclick="startSimulation()">▶️ Start Simulation</button>
+                <button onclick="stopSimulation()">⏸️ Stop Simulation</button>
+                <button onclick="refreshData()">🔄 Refresh Now</button>
+            </div>
+        </div>
+
+        <div id="rowersContainer" class="rowers-grid"></div>
+
+        <div id="noData" class="no-data" style="display: none;">
+            <h2>No Rowers Connected</h2>
+            <p>Click "Add Simulated Rower" above to test the display, or connect a C2 rowing machine.</p>
+        </div>
+
+        <footer>
+            <p>Rowbot © 2025 - Realtime rowing data display</p>
+        </footer>
+    </div>
+
+    <script>
+        let refreshInterval = null;
+        let simulationInterval = null;
+        let simulationActive = false;
+
+        // Fetch and display rowers data
+        async function fetchRowers() {
+            try {
+                const response = await fetch('/api/rowers');
+                const data = await response.json();
+                displayRowers(data.rowers);
+                updateStatus(data);
+                return data;
+            } catch (error) {
+                console.error('Error fetching rowers:', error);
+                return null;
+            }
+        }
+
+        // Display rowers in the grid
+        function displayRowers(rowers) {
+            const container = document.getElementById('rowersContainer');
+            const noData = document.getElementById('noData');
+            
+            const rowerIds = Object.keys(rowers);
+            
+            if (rowerIds.length === 0) {
+                container.innerHTML = '';
+                noData.style.display = 'block';
+                return;
+            }
+            
+            noData.style.display = 'none';
+            
+            container.innerHTML = rowerIds.map(id => {
+                const rower = rowers[id];
+                return `
+                    <div class="rower-card">
+                        <div class="rower-header">
+                            <div class="rower-name">${rower.name || 'Rower ' + id}</div>
+                            <div class="rower-id">#${id}</div>
+                        </div>
+                        <div class="metrics">
+                            <div class="metric metric-large">
+                                <div class="metric-label">Split (500m)</div>
+                                <div class="metric-value">${rower.split || '0:00.0'}</div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-label">Distance (m)</div>
+                                <div class="metric-value">${rower.distance || 0}</div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-label">Time</div>
+                                <div class="metric-value">${formatTime(rower.time || 0)}</div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-label">Stroke Rate</div>
+                                <div class="metric-value">${rower.strokeRate || 0}</div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-label">Watts</div>
+                                <div class="metric-value">${rower.watts || 0}</div>
+                            </div>
+                        </div>
+                        ${rower.lastUpdate ? `<div class="last-update">Updated: ${new Date(rower.lastUpdate).toLocaleTimeString()}</div>` : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Format seconds to MM:SS
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        // Update status bar
+        function updateStatus(data) {
+            const rowerCount = Object.keys(data.rowers || {}).length;
+            document.getElementById('rowerCount').textContent = `${rowerCount} Rower${rowerCount !== 1 ? 's' : ''}`;
+            document.getElementById('lastRefresh').textContent = new Date().toLocaleTimeString();
+        }
+
+        // Add a simulated rower
+        async function addSimulatedRower() {
+            const rowerId = 'R' + Date.now().toString().slice(-6);
+            const names = ['Alice', 'Bob', 'Charlie', 'Diana', 'Eve', 'Frank', 'Grace', 'Henry'];
+            const randomName = names[Math.floor(Math.random() * names.length)];
+            
+            const data = {
+                name: randomName,
+                distance: 0,
+                time: 0,
+                split: '2:00.0',
+                strokeRate: 20,
+                watts: 150,
+                calories: 0
+            };
+            
+            try {
+                const response = await fetch(`/api/rowers/${rowerId}/update`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                if (response.ok) {
+                    await fetchRowers();
+                }
+            } catch (error) {
+                console.error('Error adding rower:', error);
+            }
+        }
+
+        // Simulate rowing data updates
+        function simulateRowing() {
+            fetch('/api/rowers')
+                .then(res => res.json())
+                .then(data => {
+                    const rowers = data.rowers;
+                    Object.keys(rowers).forEach(async (rowerId) => {
+                        const rower = rowers[rowerId];
+                        
+                        // Simulate progression
+                        const newDistance = rower.distance + Math.random() * 15 + 5; // 5-20 meters per update
+                        const newTime = rower.time + 1;
+                        const strokeRate = Math.floor(Math.random() * 10) + 18; // 18-28 spm
+                        const watts = Math.floor(Math.random() * 100) + 100; // 100-200 watts
+                        
+                        // Calculate split (time to row 500m at current pace)
+                        const pace = newTime / (newDistance / 500);
+                        const splitMins = Math.floor(pace / 60);
+                        const splitSecs = (pace % 60).toFixed(1);
+                        const split = `${splitMins}:${splitSecs.padStart(4, '0')}`;
+                        
+                        const updatedData = {
+                            ...rower,
+                            distance: Math.round(newDistance),
+                            time: newTime,
+                            split: split,
+                            strokeRate: strokeRate,
+                            watts: watts,
+                            calories: Math.floor(newDistance * 3 / 1000) // Rough calorie estimate
+                        };
+                        
+                        await fetch(`/api/rowers/${rowerId}/update`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify(updatedData)
+                        });
+                    });
+                    
+                    // Refresh display after updates
+                    setTimeout(fetchRowers, 100);
+                })
+                .catch(error => console.error('Error in simulation:', error));
+        }
+
+        // Start simulation
+        function startSimulation() {
+            if (simulationActive) return;
+            
+            simulationActive = true;
+            simulationInterval = setInterval(simulateRowing, 1000);
+            console.log('Simulation started');
+        }
+
+        // Stop simulation
+        function stopSimulation() {
+            if (simulationInterval) {
+                clearInterval(simulationInterval);
+                simulationInterval = null;
+                simulationActive = false;
+                console.log('Simulation stopped');
+            }
+        }
+
+        // Refresh data manually
+        function refreshData() {
+            fetchRowers();
+        }
+
+        // Auto-refresh every 2 seconds
+        refreshInterval = setInterval(fetchRowers, 2000);
+
+        // Initial fetch
+        fetchRowers();
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            if (refreshInterval) clearInterval(refreshInterval);
+            if (simulationInterval) clearInterval(simulationInterval);
+        });
+    </script>
+</body>
+</html>
