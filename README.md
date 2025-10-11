@@ -3,6 +3,8 @@
 **Rowbot** is an open-source big-screen display + backend for Concept2 rower challenges and fundraising events.
 It connects to multiple PM5 monitors, counts up total metres rowed in real time, and shows the results on a simple full-screen web page — perfect for gyms, CrossFit boxes, and charity “million-metre” events.
 
+<img width="2311" height="1511" alt="Screenshot 2025-10-11 at 11 38 17" src="https://github.com/user-attachments/assets/f6694352-a800-49b6-a8d2-8cdf34bf3a68" />
+
 ---
 
 ## ✨ Features
