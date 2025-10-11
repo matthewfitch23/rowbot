@@ -1,2 +1,6 @@
-Flask==3.0.0
-Flask-CORS==4.0.0
+black
+flask
+git+https://github.com/droogmic/Py3Row.git#egg=pyrow
+pyusb
+ruff
+waitress

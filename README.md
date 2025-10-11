@@ -1,116 +1,103 @@
-# rowbot
-Realtime display board for one or more C2 rowers
+# Rowbot 🚣‍♂️
 
-## Overview
-Rowbot is a Flask-based web application that provides a real-time display board for monitoring rowing data from Concept2 (C2) rowing machines. The application features a Python Flask server API and an interactive web interface.
+**Rowbot** is an open-source big-screen display + backend for Concept2 rower challenges and fundraising events.
+It connects to multiple PM5 monitors, counts up total metres rowed in real time, and shows the results on a simple full-screen web page — perfect for gyms, CrossFit boxes, and charity “million-metre” events.
 
-## Features
-- 🚣 Real-time display of rowing metrics
-- 📊 Multi-rower support
-- 🎨 Beautiful, responsive web interface
-- 🔄 Auto-refreshing data display
-- 🧪 Built-in simulation mode for testing
+---
 
-## Rowing Metrics Displayed
-- Distance (meters)
-- Time (elapsed)
-- Split (500m pace)
-- Stroke Rate (strokes per minute)
-- Power (Watts)
-- Calories
+## ✨ Features
 
-## Setup
+- **Real-time metre tracking** across any number of Concept2 rowers (PM5).
+- **Crash-safe state** with append-only log + periodic snapshots.
+- **Handles edge cases**: disconnects, countdown workouts, resets, new devices mid-event.
+- **Manual corrections**:
+  - Add missed metres.
+  - Override fundraising total.
+- **Fundraising integration**: track amount raised alongside metres.
+- **Web UI** (`./static/index.html`):
+  - Big, high-contrast counter for gym screens.
+  - Shows connected rowers and donation total.
+  - Demo mode for testing without hardware.
+- **Resilient Python server** (`./app.py`) with REST API.
+- **MIT licensed** — free for anyone to use, modify, and share.
 
-### Prerequisites
-- Python 3.7 or higher
-- macOS (or Linux/Windows with minor adjustments)
+---
 
-### Installation
+## 🚀 Quick start
 
-1. Clone the repository:
-```bash
-git clone https://github.com/matthewfitch23/rowbot.git
-cd rowbot
-```
+### 1. Clone and set up
 
-2. Install Python dependencies:
-```bash
-pip install -r requirements.txt
-```
+Rowbot is built for **Python 3.11**. We recommend [uv](https://github.com/astral-sh/uv) for fast installs.
 
-## Running the Application
+    git clone https://github.com/yourname/rowbot.git
+    cd rowbot
+    uv venv
+    source .venv/bin/activate
+    uv pip install -r requirements.txt
 
-1. Start the Flask server:
-```bash
-python app.py
-```
+### 2. Run the server
 
-2. Open your web browser and navigate to:
-```
-http://localhost:5000
-```
+    PM5_ADMIN_TOKEN="supersecret" python app.py
 
-The server will run on `0.0.0.0:5000`, making it accessible from other devices on your local network.
+### 3. Open the UI
 
-### Accessing from Other Devices
-To access the display from other devices on your network (e.g., tablets, phones):
-1. Find your Mac's local IP address (System Preferences → Network)
-2. On the other device, navigate to `http://YOUR_MAC_IP:5000`
+Go to http://localhost:5000/ in a browser.
+Put `static/index.html` up on a big screen to watch the metres tick up.
 
-## API Endpoints
+---
 
-### GET /api/health
-Health check endpoint to verify the server is running.
+## 🔌 API endpoints
 
-### GET /api/rowers
-Get all rowers and their current data.
+- **GET /status** → current totals & connected devices.
+- **POST /adjust** → add metres manually.
+  - Body: {"device_key":"all"|"PM5-...","delta":25,"reason":"..."}
+- **GET /fundraising_status** → {"amount": 1234} (pounds).
+- **POST /fundraising_set** → override fundraising total.
+  - Body: {"amount": 5000, "reason":"manual correction"}
 
-### GET /api/rowers/<rower_id>
-Get specific rower data by ID.
+All mutating endpoints require header: X-Admin-Token: <PM5_ADMIN_TOKEN>
 
-### POST /api/rowers/<rower_id>/update
-Update or create rower data.
+---
 
-**Request Body:**
-```json
-{
-  "name": "Rower Name",
-  "distance": 1000,
-  "time": 180,
-  "split": "1:30.0",
-  "strokeRate": 24,
-  "watts": 200,
-  "calories": 50
-}
-```
+## 🖥️ Demo mode
 
-## Demo/Simulation Mode
+Append `?demo=1` to the URL (e.g. http://localhost:5000/?demo=1) to simulate metres ticking up and random donations without any hardware.
 
-The web interface includes built-in simulation controls for testing:
-- **Add Simulated Rower**: Creates a new virtual rower with random name
-- **Start Simulation**: Begins automatic data updates for all rowers
-- **Stop Simulation**: Pauses the simulation
-- **Refresh Now**: Manually refresh the display
+---
 
-## Architecture
+## 📂 Project structure
 
-### Backend (Flask)
-- `app.py`: Main Flask application with API endpoints
-- In-memory data storage (can be extended to use a database)
-- CORS enabled for cross-origin requests
+    rowbot/
+    ├── app.py              # Flask server & PM5 polling loop
+    ├── requirements.txt    # Python dependencies
+    ├── pyproject.toml      # Ruff + Black configuration
+    ├── ruff.toml           # (optional, if you want overrides)
+    └── static/
+        └── index.html      # Full-screen web UI
 
-### Frontend (Static Web Page)
-- `static/index.html`: Single-page application
-- Responsive design with gradient background
-- Auto-refreshing every 2 seconds
-- Interactive controls for simulation
+---
 
-## Future Enhancements
-- Connect to real C2 rowing machines via PM5 monitors
-- Database persistence for historical data
-- User authentication and profiles
-- Workout history and analytics
-- Comparison and leaderboard features
+## 🛠️ Requirements
 
-## License
-MIT License - see LICENSE file for details
+- Python 3.11
+- Concept2 rowers with **PM5 monitors** (USB)
+- libusb installed on your system (for pyusb/pyrow)
+
+---
+
+## 🧹 Code style
+
+We use **[Ruff](https://github.com/astral-sh/ruff)** for linting & import sorting, and **[Black](https://black.readthedocs.io/)** for formatting.
+
+Check and fix:
+
+    ruff check --fix .
+    black .
+
+Ruff is also configured to run `pyupgrade` rules for modern Python 3.11 syntax.
+
+---
+
+## 📝 License
+
+MIT © 2025 Matthew Fitch

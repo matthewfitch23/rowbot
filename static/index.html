@@ -1,460 +1,756 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rowbot - C2 Rower Display Board</title>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>rowbot</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Arial', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: #fff;
-            padding: 20px;
-            min-height: 100vh;
-        }
-
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-        }
-
-        header {
-            text-align: center;
-            padding: 20px 0;
-            margin-bottom: 30px;
-        }
-
-        h1 {
-            font-size: 2.5rem;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-            margin-bottom: 10px;
-        }
-
-        .subtitle {
-            font-size: 1.1rem;
-            opacity: 0.9;
-        }
-
-        .status-bar {
-            background: rgba(255,255,255,0.1);
-            padding: 10px 20px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            backdrop-filter: blur(10px);
-        }
-
-        .status-indicator {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .status-dot {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            background: #4ade80;
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-
-        .rowers-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-
-        .rower-card {
-            background: rgba(255,255,255,0.15);
-            backdrop-filter: blur(10px);
-            border-radius: 15px;
-            padding: 25px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-
-        .rower-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 12px 40px rgba(0,0,0,0.2);
-        }
-
-        .rower-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 15px;
-            border-bottom: 2px solid rgba(255,255,255,0.2);
-        }
-
-        .rower-name {
-            font-size: 1.5rem;
-            font-weight: bold;
-        }
-
-        .rower-id {
-            background: rgba(255,255,255,0.2);
-            padding: 5px 15px;
-            border-radius: 20px;
-            font-size: 0.9rem;
-        }
-
-        .metrics {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
-        }
-
-        .metric {
-            background: rgba(255,255,255,0.1);
-            padding: 15px;
-            border-radius: 10px;
-        }
-
-        .metric-label {
-            font-size: 0.85rem;
-            opacity: 0.8;
-            margin-bottom: 5px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .metric-value {
-            font-size: 1.8rem;
-            font-weight: bold;
-        }
-
-        .metric-large {
-            grid-column: span 2;
-        }
-
-        .metric-large .metric-value {
-            font-size: 2.5rem;
-        }
-
-        .no-data {
-            text-align: center;
-            padding: 60px 20px;
-            background: rgba(255,255,255,0.1);
-            border-radius: 15px;
-            backdrop-filter: blur(10px);
-        }
-
-        .no-data h2 {
-            font-size: 1.5rem;
-            margin-bottom: 10px;
-        }
-
-        .no-data p {
-            opacity: 0.8;
-        }
-
-        .controls {
-            background: rgba(255,255,255,0.1);
-            padding: 20px;
-            border-radius: 15px;
-            backdrop-filter: blur(10px);
-            margin-bottom: 20px;
-        }
-
-        .controls h3 {
-            margin-bottom: 15px;
-        }
-
-        .button-group {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-
-        button {
-            background: rgba(255,255,255,0.2);
-            color: #fff;
-            border: 2px solid rgba(255,255,255,0.3);
-            padding: 10px 20px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 1rem;
-            transition: all 0.3s ease;
-        }
-
-        button:hover {
-            background: rgba(255,255,255,0.3);
-            border-color: rgba(255,255,255,0.5);
-            transform: translateY(-2px);
-        }
-
-        button:active {
-            transform: translateY(0);
-        }
-
-        .last-update {
-            font-size: 0.85rem;
-            opacity: 0.7;
-            margin-top: 10px;
-        }
-
-        footer {
-            text-align: center;
-            padding: 20px;
-            opacity: 0.7;
-        }
+      :root {
+        --bg: #000;
+        --fg: #fff;
+        --accent: #fce92e;
+      }
+      html,
+      body {
+        height: 100%;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--fg);
+        font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto,
+          "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji",
+          "Segoe UI Emoji";
+        display: grid;
+        place-items: center;
+      }
+      .wrap {
+        width: min(1200px, 96vw);
+        padding: min(4vh, 24px);
+        text-align: center;
+      }
+      .title {
+        font-size: clamp(16px, 2.6vw, 28px);
+        letter-spacing: 0.06em;
+        opacity: 0.9;
+      }
+      .big-wrap {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+      .big {
+        font-variant-numeric: tabular-nums lining-nums;
+        font-feature-settings: "tnum" 1, "lnum" 1;
+        font-weight: 800;
+        line-height: 1.05;
+        font-size: clamp(72px, 22vw, 360px);
+        margin: 2vh 0 1vh;
+        text-shadow: 0 0 24px rgba(252, 233, 46, 0.2);
+        white-space: nowrap;
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+      }
+      .unit {
+        font-size: clamp(16px, 2.6vw, 28px);
+        opacity: 0.85;
+      }
+      .badges {
+        margin-top: 2vh;
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+        flex-wrap: wrap;
+      }
+      .badge {
+        border: 2px solid var(--accent);
+        color: var(--accent);
+        padding: 8px 12px;
+        border-radius: 999px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+      }
+      .rowers {
+        font-size: clamp(12px, 2.2vw, 20px);
+        opacity: 0.8;
+        margin-top: 1.2vh;
+      }
+      .dot {
+        display: inline-block;
+        width: 0.6em;
+        height: 0.6em;
+        border-radius: 50%;
+        background: #26c281;
+        box-shadow: 0 0 10px #26c281aa;
+        vertical-align: middle;
+        margin-right: 0.35em;
+      }
+      .dot.off {
+        background: #888;
+        box-shadow: none;
+      }
+      .footer {
+        position: fixed;
+        bottom: 10px;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 12px;
+        opacity: 0.55;
+      }
+      .accent {
+        color: var(--accent);
+      }
+      .logo-bottom {
+        position: fixed;
+        bottom: 15px;
+        right: 20px;
+        opacity: 0.7;
+      }
+      .logo-bottom img {
+        max-width: 140px;
+        width: 20vw;
+        height: auto;
+      }
+      .fab-col {
+        position: fixed;
+        bottom: 20px;
+        left: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .fab {
+        border: 2px solid var(--accent);
+        color: var(--accent);
+        background: transparent;
+        border-radius: 999px;
+        padding: 10px 14px;
+        font-weight: 800;
+        letter-spacing: 0.04em;
+        cursor: pointer;
+        box-shadow: 0 0 20px rgba(252, 233, 46, 0.15);
+      }
+      .fab:hover {
+        background: rgba(252, 233, 46, 0.1);
+      }
+      .modal {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.7);
+        display: none;
+        align-items: center;
+        justify-content: center;
+      }
+      .modal.open {
+        display: flex;
+      }
+      .card {
+        width: min(520px, 92vw);
+        background: #0b0b0b;
+        border: 1px solid #222;
+        border-radius: 16px;
+        padding: 18px;
+        text-align: left;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+      }
+      .card h2 {
+        margin: 0 0 12px;
+        font-size: 20px;
+      }
+      .row {
+        display: grid;
+        grid-template-columns: 1fr 2fr;
+        gap: 10px;
+        align-items: center;
+        margin: 8px 0;
+      }
+      .row label {
+        opacity: 0.85;
+        font-size: 14px;
+      }
+      .row input,
+      .row select {
+        background: #111;
+        color: #fff;
+        border: 1px solid #333;
+        border-radius: 10px;
+        padding: 10px 12px;
+        font-size: 14px;
+      }
+      .actions {
+        display: flex;
+        gap: 10px;
+        justify-content: flex-end;
+        margin-top: 14px;
+      }
+      .btn {
+        border: 1px solid #444;
+        background: #111;
+        color: #fff;
+        border-radius: 10px;
+        padding: 10px 14px;
+        cursor: pointer;
+      }
+      .btn.primary {
+        border-color: var(--accent);
+        color: #000;
+        background: var(--accent);
+        font-weight: 800;
+      }
+      .note {
+        font-size: 12px;
+        opacity: 0.6;
+        margin-top: 6px;
+      }
+      .hint {
+        position: fixed;
+        top: 12px;
+        right: 16px;
+        font-size: 12px;
+        opacity: 0.5;
+      }
+      .toast {
+        position: fixed;
+        top: 16px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #111;
+        color: #fff;
+        border: 1px solid #333;
+        padding: 10px 14px;
+        border-radius: 10px;
+        display: none;
+      }
+      .toast.show {
+        display: inline-block;
+      }
+      .fund {
+        margin-top: 3vh;
+      }
+      .fund-title {
+        font-size: clamp(14px, 2.4vw, 26px);
+        letter-spacing: 0.06em;
+        opacity: 0.85;
+      }
+      .fund-amount {
+        font-variant-numeric: tabular-nums lining-nums;
+        font-weight: 800;
+        line-height: 1.05;
+        color: var(--accent);
+        font-size: clamp(36px, 8vw, 120px);
+        text-shadow: 0 0 20px rgba(252, 233, 46, 0.18);
+      }
     </style>
-</head>
-<body>
-    <div class="container">
-        <header>
-            <h1>🚣 Rowbot</h1>
-            <div class="subtitle">Realtime Display Board for C2 Rowers</div>
-        </header>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="title">TOTAL METERS ROWED</div>
+      <div class="big-wrap"><div id="total" class="big">0</div></div>
+      <div class="unit">METRES</div>
 
-        <div class="status-bar">
-            <div class="status-indicator">
-                <div class="status-dot"></div>
-                <span>Connected</span>
-            </div>
-            <div>
-                <span id="rowerCount">0 Rowers</span>
-            </div>
-            <div>
-                <span id="lastRefresh">Never</span>
-            </div>
+      <div class="badges">
+        <div class="badge"><span id="rowerCount">0</span> CONNECTED</div>
+        <div class="badge">REFRESH: <span id="refresh">—</span></div>
+        <div class="badge">
+          MODE: <span id="mode" class="accent">DEMO</span>
         </div>
+      </div>
 
-        <div class="controls">
-            <h3>Demo Controls (Simulation)</h3>
-            <div class="button-group">
-                <button onclick="addSimulatedRower()">➕ Add Simulated Rower</button>
-                <button onclick="startSimulation()">▶️ Start Simulation</button>
-                <button onclick="stopSimulation()">⏸️ Stop Simulation</button>
-                <button onclick="refreshData()">🔄 Refresh Now</button>
-            </div>
+      <div id="rowers" class="rowers">—</div>
+
+      <!-- Fundraising block -->
+      <div id="fund" class="fund">
+        <div class="fund-title">AMOUNT RAISED</div>
+        <div id="fundAmount" class="fund-amount">£0</div>
+      </div>
+    </div>
+
+    <div class="footer">
+      Press <span class="accent">D</span> to toggle demo ·
+      <span class="accent">R</span> to reset demo · Press
+      <span class="accent">A</span> to add metres · Press
+      <span class="accent">F</span> to set donations · Data color:
+      <span class="accent">#FCE92E</span>
+    </div>
+
+    <div class="fab-col">
+      <button id="addBtn" class="fab" title="Add metres">+ ADD METRES</button>
+      <button id="setFundBtn" class="fab" title="Set donation total">
+        £ SET DONATIONS
+      </button>
+    </div>
+
+    <div class="logo-bottom">
+      <img
+        src="https://images.squarespace-cdn.com/content/v1/65f2f4c3b337df1f3d4d22d4/792b6873-59d0-49b4-a1ec-be2db38472e6/Crossfit+Pioneer+-+White+on+black+lines.jpg?format=2500w"
+        alt="CrossFit Pioneer Logo"
+      />
+    </div>
+
+    <div class="hint">
+      Hotkeys: D (demo), R (reset demo), A (add metres), F (set donations)
+    </div>
+    <div id="toast" class="toast" role="status" aria-live="polite">Saved</div>
+
+    <!-- Modal: Add metres -->
+    <div id="modal" class="modal" aria-hidden="true">
+      <div
+        class="card"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="modalTitle"
+      >
+        <h2 id="modalTitle">Add metres</h2>
+        <div class="row">
+          <label for="device">Device</label>
+          <select id="device">
+            <option value="all">All rowers</option>
+          </select>
         </div>
-
-        <div id="rowersContainer" class="rowers-grid"></div>
-
-        <div id="noData" class="no-data" style="display: none;">
-            <h2>No Rowers Connected</h2>
-            <p>Click "Add Simulated Rower" above to test the display, or connect a C2 rowing machine.</p>
+        <div class="row">
+          <label for="delta">Metres</label>
+          <input
+            id="delta"
+            type="number"
+            min="1"
+            step="1"
+            inputmode="numeric"
+            placeholder="e.g. 50"
+          />
         </div>
+        <div class="row">
+          <label for="reason">Reason</label>
+          <input id="reason" type="text" placeholder="e.g. PM5 disconnect" />
+        </div>
+        <div class="row">
+          <label for="token">Admin token</label>
+          <input id="token" type="password" placeholder="X-Admin-Token" />
+        </div>
+        <div class="actions">
+          <button class="btn" id="cancelBtn">Cancel</button>
+          <button class="btn primary" id="saveBtn">Add metres</button>
+        </div>
+        <div class="note">
+          Calls <code>POST /adjust</code> with
+          <code>{ device_key, delta, reason }</code>.
+        </div>
+      </div>
+    </div>
 
-        <footer>
-            <p>Rowbot © 2025 - Realtime rowing data display</p>
-        </footer>
+    <!-- Modal: Set donations total -->
+    <div id="fundModal" class="modal" aria-hidden="true">
+      <div
+        class="card"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="fundTitle"
+      >
+        <h2 id="fundTitle">Set donations total (£)</h2>
+        <div class="row">
+          <label for="fundValue">Amount</label>
+          <input
+            id="fundValue"
+            type="number"
+            min="0"
+            step="1"
+            inputmode="numeric"
+            placeholder="e.g. 1250"
+          />
+        </div>
+        <div class="row">
+          <label for="fundReason">Reason</label>
+          <input
+            id="fundReason"
+            type="text"
+            placeholder="e.g. corrected from dashboard"
+          />
+        </div>
+        <div class="row">
+          <label for="fundToken">Admin token</label>
+          <input id="fundToken" type="password" placeholder="X-Admin-Token" />
+        </div>
+        <div class="actions">
+          <button class="btn" id="fundCancel">Cancel</button>
+          <button class="btn primary" id="fundSave">Set total</button>
+        </div>
+        <div class="note">
+          Calls <code>POST /fundraising_set</code> with
+          <code>{ amount, reason }</code>.
+        </div>
+      </div>
     </div>
 
     <script>
-        let refreshInterval = null;
-        let simulationInterval = null;
-        let simulationActive = false;
+      (function () {
+        // Elements
+        const totalEl = document.getElementById("total");
+        const rowerCountEl = document.getElementById("rowerCount");
+        const rowersEl = document.getElementById("rowers");
+        const refreshEl = document.getElementById("refresh");
+        const modeEl = document.getElementById("mode");
+        const addBtn = document.getElementById("addBtn");
+        const modal = document.getElementById("modal");
+        const deviceSel = document.getElementById("device");
+        const deltaInput = document.getElementById("delta");
+        const reasonInput = document.getElementById("reason");
+        const tokenInput = document.getElementById("token");
+        const cancelBtn = document.getElementById("cancelBtn");
+        const saveBtn = document.getElementById("saveBtn");
+        const toast = document.getElementById("toast");
+        const fundAmountEl = document.getElementById("fundAmount");
+        const bigWrapEl = document.querySelector(".big-wrap");
+        const setFundBtn = document.getElementById("setFundBtn");
+        const fundModal = document.getElementById("fundModal");
+        const fundValue = document.getElementById("fundValue");
+        const fundReason = document.getElementById("fundReason");
+        const fundToken = document.getElementById("fundToken");
+        const fundCancel = document.getElementById("fundCancel");
+        const fundSave = document.getElementById("fundSave");
 
-        // Fetch and display rowers data
-        async function fetchRowers() {
-            try {
-                const response = await fetch('/api/rowers');
-                const data = await response.json();
-                displayRowers(data.rowers);
-                updateStatus(data);
-                return data;
-            } catch (error) {
-                console.error('Error fetching rowers:', error);
-                return null;
+        // Config
+        const ACCENT = "#FCE92E";
+        const API_STATUS = "/status";
+        const API_ADJUST = "/adjust";
+        const API_FUND = "/fundraising_status";
+        const API_FUND_SET = "/fundraising_set";
+        const POLL_MS = 1000;
+        const FUND_POLL_MS = 15000;
+
+        // Utils
+        const fmt = (n) => n.toLocaleString(undefined);
+        function showToast(msg) {
+          toast.textContent = msg;
+          toast.classList.add("show");
+          setTimeout(() => toast.classList.remove("show"), 1500);
+        }
+
+        // Token persistence (shared)
+        tokenInput.value = localStorage.getItem("pm5_admin_token") || "";
+        tokenInput.addEventListener("change", () =>
+          localStorage.setItem("pm5_admin_token", tokenInput.value)
+        );
+        fundToken.value = localStorage.getItem("pm5_admin_token") || "";
+        fundToken.addEventListener("change", () =>
+          localStorage.setItem("pm5_admin_token", fundToken.value)
+        );
+
+        // Animate big number + fit
+        let displayTotal = 0;
+        let targetTotal = 0;
+        let lastAnim = performance.now();
+
+        function fitBig() {
+          const max = 360; // px
+          const min = 72; // px
+          const avail = bigWrapEl.clientWidth * 0.98;
+          let lo = min,
+            hi = max,
+            best = min;
+          totalEl.style.fontSize = max + "px";
+          for (let i = 0; i < 12; i++) {
+            const mid = (lo + hi) / 2;
+            totalEl.style.fontSize = mid + "px";
+            const w = totalEl.scrollWidth;
+            if (w <= avail) {
+              best = mid;
+              lo = mid;
+            } else {
+              hi = mid;
             }
+          }
+          totalEl.style.fontSize = Math.round(best) + "px";
         }
 
-        // Display rowers in the grid
-        function displayRowers(rowers) {
-            const container = document.getElementById('rowersContainer');
-            const noData = document.getElementById('noData');
-            
-            const rowerIds = Object.keys(rowers);
-            
-            if (rowerIds.length === 0) {
-                container.innerHTML = '';
-                noData.style.display = 'block';
-                return;
-            }
-            
-            noData.style.display = 'none';
-            
-            container.innerHTML = rowerIds.map(id => {
-                const rower = rowers[id];
-                return `
-                    <div class="rower-card">
-                        <div class="rower-header">
-                            <div class="rower-name">${rower.name || 'Rower ' + id}</div>
-                            <div class="rower-id">#${id}</div>
-                        </div>
-                        <div class="metrics">
-                            <div class="metric metric-large">
-                                <div class="metric-label">Split (500m)</div>
-                                <div class="metric-value">${rower.split || '0:00.0'}</div>
-                            </div>
-                            <div class="metric">
-                                <div class="metric-label">Distance (m)</div>
-                                <div class="metric-value">${rower.distance || 0}</div>
-                            </div>
-                            <div class="metric">
-                                <div class="metric-label">Time</div>
-                                <div class="metric-value">${formatTime(rower.time || 0)}</div>
-                            </div>
-                            <div class="metric">
-                                <div class="metric-label">Stroke Rate</div>
-                                <div class="metric-value">${rower.strokeRate || 0}</div>
-                            </div>
-                            <div class="metric">
-                                <div class="metric-label">Watts</div>
-                                <div class="metric-value">${rower.watts || 0}</div>
-                            </div>
-                        </div>
-                        ${rower.lastUpdate ? `<div class="last-update">Updated: ${new Date(rower.lastUpdate).toLocaleTimeString()}</div>` : ''}
-                    </div>
-                `;
-            }).join('');
+        function animate(now) {
+          const dt = Math.min(100, now - lastAnim);
+          lastAnim = now;
+          const diff = targetTotal - displayTotal;
+          displayTotal += diff * Math.min(1, dt / 200);
+          if (Math.abs(diff) < 0.5) displayTotal = targetTotal;
+          const shown = Math.round(displayTotal);
+          const text = fmt(shown);
+          if (totalEl.textContent !== text) {
+            totalEl.textContent = text;
+            fitBig();
+          }
+          requestAnimationFrame(animate);
+        }
+        requestAnimationFrame(animate);
+        window.addEventListener("resize", fitBig);
+
+        // Devices dropdown cache
+        let latestDevices = {};
+        function populateDevices() {
+          const selected = deviceSel.value;
+          let opts = '<option value="all">All rowers</option>';
+          for (const [key, d] of Object.entries(latestDevices)) {
+            const label = d && d.label ? d.label : key;
+            opts += '<option value="' + key + '">' + label + "</option>";
+          }
+          deviceSel.innerHTML = opts;
+          if (selected) deviceSel.value = selected;
         }
 
-        // Format seconds to MM:SS
-        function formatTime(seconds) {
-            const mins = Math.floor(seconds / 60);
-            const secs = Math.floor(seconds % 60);
-            return `${mins}:${secs.toString().padStart(2, '0')}`;
-        }
+        // Demo mode
+        let demo = new URLSearchParams(location.search).get("demo") === "1";
+        let demoTick = 10; // base m/s
+        let demoDevices = 6;
+        let demoTotals = 0;
 
-        // Update status bar
-        function updateStatus(data) {
-            const rowerCount = Object.keys(data.rowers || {}).length;
-            document.getElementById('rowerCount').textContent = `${rowerCount} Rower${rowerCount !== 1 ? 's' : ''}`;
-            document.getElementById('lastRefresh').textContent = new Date().toLocaleTimeString();
+        function randomInt(min, max) {
+          return Math.floor(Math.random() * (max - min + 1)) + min;
         }
+        function stepDemo() {
+          // vary tick slightly
+          demoTick = Math.max(1, demoTick + randomInt(-2, 2));
+          demoTotals += demoTick; // per second
+          targetTotal = demoTotals;
 
-        // Add a simulated rower
-        async function addSimulatedRower() {
-            const rowerId = 'R' + Date.now().toString().slice(-6);
-            const names = ['Alice', 'Bob', 'Charlie', 'Diana', 'Eve', 'Frank', 'Grace', 'Henry'];
-            const randomName = names[Math.floor(Math.random() * names.length)];
-            
-            const data = {
-                name: randomName,
-                distance: 0,
-                time: 0,
-                split: '2:00.0',
-                strokeRate: 20,
-                watts: 150,
-                calories: 0
+          rowerCountEl.textContent = demoDevices;
+          latestDevices = {};
+          for (let i = 1; i <= demoDevices; i++) {
+            latestDevices["PM5-DEMO-" + i] = {
+              label: "Rower " + i,
+              connected: true,
+              cumulative: Math.round(demoTotals / demoDevices),
             };
-            
+          }
+          populateDevices();
+
+          let html = "";
+          for (let i = 1; i <= demoDevices; i++) {
+            html += '<span class="dot"></span>Rower ' + i;
+            if (i < demoDevices) html += "   ";
+          }
+          rowersEl.innerHTML = html;
+        }
+
+        // Poll real API (fallback to demo after a few failures)
+        let failures = 0;
+        async function poll() {
+          const start = performance.now();
+          if (!demo) {
             try {
-                const response = await fetch(`/api/rowers/${rowerId}/update`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(data)
-                });
-                
-                if (response.ok) {
-                    await fetchRowers();
-                }
-            } catch (error) {
-                console.error('Error adding rower:', error);
+              const res = await fetch(API_STATUS, { cache: "no-store" });
+              if (!res.ok) throw new Error(res.status + " " + res.statusText);
+              const json = await res.json();
+              const devices = json.devices || {};
+              latestDevices = devices;
+              populateDevices();
+              const connected = Object.values(devices).filter(
+                (d) => d && d.connected
+              ).length;
+              let sum = 0;
+              for (const d of Object.values(devices))
+                sum += d && d.cumulative ? d.cumulative : 0;
+              targetTotal = sum;
+              rowerCountEl.textContent = connected;
+              let html = "";
+              for (const [key, d] of Object.entries(devices)) {
+                const on = d && d.connected ? "" : "off";
+                const name = d && d.label ? d.label : key;
+                html += '<span class="dot ' + on + '"></span>' + name + "   ";
+              }
+              rowersEl.innerHTML = html;
+              failures = 0;
+              modeEl.textContent = "LIVE";
+              modeEl.style.color = ACCENT;
+            } catch (err) {
+              failures++;
+              if (failures >= 3) {
+                demo = true;
+                modeEl.textContent = "DEMO";
+                modeEl.style.color = ACCENT;
+              }
             }
+          }
+          if (demo) stepDemo();
+          const elapsed = Math.round(performance.now() - start);
+          if (refreshEl)
+            refreshEl.textContent =
+              new Date().toLocaleTimeString() + " (" + elapsed + "ms)";
         }
+        setInterval(poll, POLL_MS);
+        poll();
 
-        // Simulate rowing data updates
-        function simulateRowing() {
-            fetch('/api/rowers')
-                .then(res => res.json())
-                .then(data => {
-                    const rowers = data.rowers;
-                    Object.keys(rowers).forEach(async (rowerId) => {
-                        const rower = rowers[rowerId];
-                        
-                        // Simulate progression
-                        const newDistance = rower.distance + Math.random() * 15 + 5; // 5-20 meters per update
-                        const newTime = rower.time + 1;
-                        const strokeRate = Math.floor(Math.random() * 10) + 18; // 18-28 spm
-                        const watts = Math.floor(Math.random() * 100) + 100; // 100-200 watts
-                        
-                        // Calculate split (time to row 500m at current pace)
-                        const pace = newTime / (newDistance / 500);
-                        const splitMins = Math.floor(pace / 60);
-                        const splitSecs = (pace % 60).toFixed(1);
-                        const split = `${splitMins}:${splitSecs.padStart(4, '0')}`;
-                        
-                        const updatedData = {
-                            ...rower,
-                            distance: Math.round(newDistance),
-                            time: newTime,
-                            split: split,
-                            strokeRate: strokeRate,
-                            watts: watts,
-                            calories: Math.floor(newDistance * 3 / 1000) // Rough calorie estimate
-                        };
-                        
-                        await fetch(`/api/rowers/${rowerId}/update`, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify(updatedData)
-                        });
-                    });
-                    
-                    // Refresh display after updates
-                    setTimeout(fetchRowers, 100);
-                })
-                .catch(error => console.error('Error in simulation:', error));
+        // --- Fundraising ---
+        let fundAmount = 0; // pounds
+        function updateFundDisplay() {
+          fundAmountEl.textContent = new Intl.NumberFormat("en-GB", {
+            style: "currency",
+            currency: "GBP",
+            maximumFractionDigits: 0,
+          }).format(fundAmount);
         }
-
-        // Start simulation
-        function startSimulation() {
-            if (simulationActive) return;
-            
-            simulationActive = true;
-            simulationInterval = setInterval(simulateRowing, 1000);
-            console.log('Simulation started');
-        }
-
-        // Stop simulation
-        function stopSimulation() {
-            if (simulationInterval) {
-                clearInterval(simulationInterval);
-                simulationInterval = null;
-                simulationActive = false;
-                console.log('Simulation stopped');
+        async function pollFund() {
+          if (!demo) {
+            try {
+              const res = await fetch(API_FUND, { cache: "no-store" });
+              if (!res.ok) throw new Error(res.status + " " + res.statusText);
+              const json = await res.json();
+              const amt = Number(json.amount);
+              fundAmount = amt > 100000 ? Math.round(amt / 100) : amt; // handle pence
+              updateFundDisplay();
+            } catch (e) {
+              /* keep last */
             }
+          }
         }
+        setInterval(pollFund, FUND_POLL_MS);
+        pollFund();
 
-        // Refresh data manually
-        function refreshData() {
-            fetchRowers();
+        // Demo donations every ~10s
+        setInterval(function () {
+          if (demo) {
+            const donation = Math.floor(Math.random() * 41) + 10; // £10–£50
+            fundAmount += donation;
+            updateFundDisplay();
+          }
+        }, 10000);
+
+        // Modal controls & adjust
+        function openModal() {
+          modal.classList.add("open");
+          deltaInput.focus();
         }
-
-        // Auto-refresh every 2 seconds
-        refreshInterval = setInterval(fetchRowers, 2000);
-
-        // Initial fetch
-        fetchRowers();
-
-        // Cleanup on page unload
-        window.addEventListener('beforeunload', () => {
-            if (refreshInterval) clearInterval(refreshInterval);
-            if (simulationInterval) clearInterval(simulationInterval);
+        function closeModal() {
+          modal.classList.remove("open");
+        }
+        addBtn.addEventListener("click", openModal);
+        cancelBtn.addEventListener("click", closeModal);
+        modal.addEventListener("click", function (e) {
+          if (e.target === modal) closeModal();
         });
+
+        async function submitAdjust() {
+          const device_key = deviceSel.value || "all";
+          const delta = parseInt(deltaInput.value, 10);
+          const reason = reasonInput.value || "";
+          const token = tokenInput.value.trim();
+          if (!delta || delta < 1) {
+            showToast("Enter metres");
+            return;
+          }
+          localStorage.setItem("pm5_admin_token", token);
+
+          if (demo) {
+            targetTotal += delta;
+            demoTotals += delta;
+            showToast("+" + delta + "m (demo)");
+            closeModal();
+            deltaInput.value = "";
+            return;
+          }
+
+          try {
+            const res = await fetch(API_ADJUST, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "X-Admin-Token": token,
+              },
+              body: JSON.stringify({
+                device_key: device_key,
+                delta: delta,
+                reason: reason,
+                by: "screen",
+              }),
+            });
+            if (!res.ok) throw new Error(await res.text());
+            showToast("+" + delta + "m saved");
+            closeModal();
+            deltaInput.value = "";
+            poll();
+          } catch (err) {
+            showToast("Error: " + String(err).slice(0, 100));
+          }
+        }
+        saveBtn.addEventListener("click", submitAdjust);
+
+        // Fund modal
+        function openFund() {
+          fundModal.classList.add("open");
+          fundValue.focus();
+        }
+        function closeFund() {
+          fundModal.classList.remove("open");
+        }
+        setFundBtn.addEventListener("click", openFund);
+        fundCancel.addEventListener("click", closeFund);
+        fundModal.addEventListener("click", function (e) {
+          if (e.target === fundModal) closeFund();
+        });
+
+        async function submitFundSet() {
+          const amount = parseInt(fundValue.value, 10);
+          const reason = fundReason.value || "";
+          const token = (fundToken.value || "").trim();
+          if (isNaN(amount) || amount < 0) {
+            showToast("Enter amount");
+            return;
+          }
+          localStorage.setItem("pm5_admin_token", token);
+
+          if (demo) {
+            fundAmount = amount;
+            updateFundDisplay();
+            showToast("Donations set (demo)");
+            closeFund();
+            fundValue.value = "";
+            return;
+          }
+
+          try {
+            const res = await fetch(API_FUND_SET, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "X-Admin-Token": token,
+              },
+              body: JSON.stringify({ amount: amount, reason: reason }),
+            });
+            if (!res.ok) throw new Error(await res.text());
+            showToast("Donations updated");
+            closeFund();
+            fundValue.value = "";
+            pollFund();
+          } catch (err) {
+            showToast("Error: " + String(err).slice(0, 100));
+          }
+        }
+        fundSave.addEventListener("click", submitFundSet);
+
+        // Hotkeys
+        window.addEventListener("keydown", function (e) {
+          if (e.key === "d" || e.key === "D") {
+            demo = !demo;
+            modeEl.textContent = demo ? "DEMO" : "LIVE";
+            modeEl.style.color = ACCENT;
+          }
+          if (e.key === "r" || e.key === "R") {
+            if (demo) {
+              demoTotals = 0;
+              targetTotal = 0;
+              demoTick = 0;
+            }
+          }
+          if (e.key === "a" || e.key === "A") {
+            openModal();
+          }
+          if (e.key === "f" || e.key === "F") {
+            openFund();
+          }
+          if (e.key === "Escape") {
+            closeModal();
+            closeFund();
+          }
+        });
+
+        // Initial fit
+        fitBig();
+      })();
     </script>
-</body>
+  </body>
 </html>
