@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-black text-white font-sans">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Rowbot</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      html {
+        font-family: "Roboto", ui-sans-serif, system-ui, -apple-system,
+          BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+      }
+    </style>
+  </head>
+  <body class="m-0 grid h-full place-items-center bg-black text-white">
+    <div class="w-full max-w-6xl px-4 text-center">
+      <div
+        class="text-lg md:text-xl lg:text-2xl font-medium opacity-90 tracking-wide"
+      >
+        TOTAL METRES ROWED
+      </div>
+
+      <div
+        id="total"
+        class="my-4 font-extrabold text-7xl md:text-[12vw] lg:text-[10vw] leading-none"
+        style="text-shadow: 0 0 24px rgba(252, 233, 46, 0.2)"
+      >
+        1,000
+      </div>
+
+      <div
+        class="text-lg md:text-xl lg:text-2xl font-medium opacity-85 tracking-wide"
+      >
+        METRES
+      </div>
+
+      <div class="mt-6 flex flex-wrap justify-center gap-3">
+        <div
+          class="rounded-full border-2 px-4 py-2 font-semibold tracking-wide text-yellow-300 border-yellow-300"
+        >
+          <span id="rowerCount">0</span> ACTIVE ROWERS
+        </div>
+        <button
+          onclick="fetchData()"
+          class="flex items-center gap-2 rounded-full border-2 px-4 py-2 font-semibold tracking-wide text-yellow-300 border-yellow-300 hover:bg-yellow-300/10 transition"
+        >
+          <svg
+            fill="currentColor"
+            viewBox="-1.5 -2.5 24 24"
+            xmlns="http://www.w3.org/2000/svg"
+            preserveAspectRatio="xMinYMin"
+            class="w-5 h-5 jam jam-refresh"
+          >
+            <path
+              d="M17.83 4.194l.42-1.377a1 1 0 1 1 1.913.585l-1.17 3.825a1 1 0 0 1-1.248.664l-3.825-1.17a1 1 0 1 1 .585-1.912l1.672.511A7.381 7.381 0 0 0 3.185 6.584l-.26.633a1 1 0 1 1-1.85-.758l.26-.633A9.381 9.381 0 0 1 17.83 4.194zM2.308 14.807l-.327 1.311a1 1 0 1 1-1.94-.484l.967-3.88a1 1 0 0 1 1.265-.716l3.828.954a1 1 0 0 1-.484 1.941l-1.786-.445a7.384 7.384 0 0 0 13.216-1.792 1 1 0 1 1 1.906.608 9.381 9.381 0 0 1-5.38 5.831 9.386 9.386 0 0 1-11.265-3.328z"
+            />
+          </svg>
+          <span id="refresh">—</span>
+        </button>
+      </div>
+
+      <div id="rowers" class="mt-4 text-sm md:text-base lg:text-lg opacity-80">
+        —
+      </div>
+    </div>
+
+    <div class="fixed bottom-2 left-1/2 -translate-x-1/2 text-xs opacity-55">
+      Live from Google Sheets · updates every 15 seconds
+    </div>
+
+    <div class="fixed bottom-2 left-2 flex flex-col items-start space-y-1">
+      <span class="text-xs md:text-sm font-medium opacity-60"
+        >Sponsored by</span
+      >
+      <img
+        src="https://social-society.co.uk/cdn/shop/collections/WhatsApp_Image_2024-11-11_at_12.32.13.jpg?v=1731706956"
+        alt="Sponsored by"
+        class="h-24 md:h-64 opacity-70 hover:opacity-100 transition-opacity duration-300"
+      />
+    </div>
+
+    <img
+      src="https://images.squarespace-cdn.com/content/v1/65f2f4c3b337df1f3d4d22d4/792b6873-59d0-49b4-a1ec-be2db38472e6/Crossfit+Pioneer+-+White+on+black+lines.jpg?format=2500w"
+      alt="CrossFit Pioneer"
+      class="fixed bottom-2 right-2 h-24 md:h-64 opacity-70 hover:opacity-100 transition-opacity duration-300"
+    />
+
+    <script>
+      const SCRIPT_URL =
+        "https://script.google.com/macros/s/AKfycbwyhjfYgAKt9pfBXtciG9e8oQDDOEynlDMC4r0YQKYla7QIm2VLZFTm1k2zDZYx9joJ/exec";
+
+      let total = 0,
+        displayTotal = 0,
+        active = [],
+        allDistances = [],
+        allSettings = [],
+        speedLookup = {},
+        lastRowCount = 0;
+
+      async function fetchData() {
+        try {
+          const res = await fetch(SCRIPT_URL + "?t=" + Date.now());
+          const data = await res.json();
+          console.log("Fetched data:", data);
+
+          allSettings = data.activeRowers.filter((r) => r && r.length >= 3);
+          allDistances = data.distances.filter((r) => r && r.length > 1);
+
+          buildSpeedLookup(data.settings);
+          computeTotals();
+          renderRowers();
+          updateMeta();
+          lastRowCount = allDistances.length;
+        } catch (e) {
+          console.error("Fetch error:", e);
+          document.getElementById("rowers").textContent = "Error loading data";
+        }
+      }
+
+      function buildSpeedLookup(rawSettings = []) {
+        speedLookup = {};
+
+        const rows = rawSettings.slice(1); // skip header row
+        for (const [label, paceStr] of rows) {
+          const parts = paceStr.split(":");
+          const minutes = parseInt(parts[0], 10) || 0;
+          const seconds = parseInt(parts[1], 10) || 0;
+          const totalSeconds = minutes * 60 + seconds;
+
+          // Convert to metres per second (mps): 500m per pace time
+          const mps = 500 / totalSeconds;
+          speedLookup[label.trim()] = mps;
+        }
+      }
+
+      function computeTotals() {
+        if (!allDistances.length) return;
+
+        const dataRows = allDistances.slice(1); // skip header
+        total = 0;
+
+        for (const row of dataRows) {
+          for (let i = 2; i < row.length; i++) {
+            const v = parseFloat(row[i]);
+            if (!isNaN(v)) total += v;
+          }
+        }
+
+        active = allSettings
+          .slice(1)
+          .filter((r) => r[1] === true)
+          .map((r) => ({
+            id: Number(r[0]),
+            speed: typeof r[2] === "string" ? r[2].trim() : "Low",
+          }));
+      }
+
+      function renderRowers() {
+        const el = document.getElementById("rowers");
+
+        if (!active.length) {
+          el.textContent = "No rowers active";
+          return;
+        }
+
+        el.innerHTML = active
+          .map(
+            (r) => `
+        <span class="inline-flex items-center gap-1.5 mr-3">
+          <span class="w-2.5 h-2.5 rounded-full ${r.speed.toLowerCase()}"></span>
+          <span class="whitespace-nowrap">R${r.id} ${r.speed}</span>
+        </span>`
+          )
+          .join("");
+      }
+
+      function updateMeta() {
+        const time = new Date().toLocaleTimeString();
+        const rows = lastRowCount.toLocaleString();
+        document.getElementById("rowerCount").textContent = active.length;
+        document.getElementById(
+          "refresh"
+        ).textContent = `${time} · ${rows} rows`;
+      }
+
+      function tickLogic() {
+        let gain = 0;
+
+        for (const r of active) {
+          const mps = speedLookup[r.speed] || 0;
+          // Apply small random ±5% variation
+          const variation = 0.95 + Math.random() * 0.1;
+          gain += mps * variation;
+        }
+
+        total += gain;
+      }
+
+      function animate() {
+        displayTotal += (total - displayTotal) * 0.05;
+        document.getElementById("total").textContent =
+          Math.floor(displayTotal).toLocaleString();
+        requestAnimationFrame(animate);
+      }
+
+      // Init
+      fetchData().then(() =>
+        console.log("Full sheet loaded:", lastRowCount, "rows")
+      );
+      setInterval(tickLogic, 1000);
+      setInterval(fetchData, 15000);
+      requestAnimationFrame(animate);
+
+      // Speed badge colors
+      const style = document.createElement("style");
+      style.textContent = `
+    .low { background: #26c281; box-shadow: 0 0 8px #26c281aa; }
+    .med { background: #ffd700; box-shadow: 0 0 8px #ffd700aa; }
+    .high { background: #ff4040; box-shadow: 0 0 8px #ff4040aa; }
+  `;
+      document.head.appendChild(style);
+    </script>
+  </body>
+</html>

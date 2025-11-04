@@ -37,10 +37,10 @@ from typing import Any
 from flask import Flask, abort, jsonify, request, send_from_directory
 
 try:
-    import pyrow  # requires libusb via pyusb underneath
+    from pyrow import pyrow as c2  # requires libusb via pyusb underneath
 except Exception as e:
     print("Warning: pyrow import failed. USB polling will not work:", e, file=sys.stderr)
-    pyrow = None
+    c2 = None
 
 # -------------------- Config --------------------
 HOST = os.getenv("HOST", "0.0.0.0")
@@ -198,7 +198,7 @@ stop_event = threading.Event()
 
 
 def poll_loop():
-    if pyrow is None:
+    if c2 is None:
         print("pyrow unavailable; skipping USB polling loop.", file=sys.stderr)
         return
 
@@ -207,7 +207,7 @@ def poll_loop():
 
     while not stop_event.is_set():
         try:
-            found = pyrow.find() or []
+            found = c2.find() or []
             found_keys = [device_key_from_raw(f) for f in found]
 
             # Connect new devices
@@ -215,7 +215,7 @@ def poll_loop():
                 key = device_key_from_raw(raw)
                 if key not in erg_map:
                     try:
-                        erg = pyrow.PyRow(raw)
+                        erg = c2.PyErg(raw)
                         _ = erg.get_workout()  # probe
                         erg_map[key] = erg
                         with state_lock:
@@ -248,7 +248,7 @@ def poll_loop():
             # Poll connected
             for key, erg in list(erg_map.items()):
                 try:
-                    data = erg.get_workout() or {}
+                    data = erg.get_monitor() or {}
                     meters = int(data.get("distance") or 0)
                     now = time.time()
                     # log raw reading
