@@ -26,7 +26,7 @@
 
       <div
         id="total"
-        class="my-4 font-extrabold text-7xl md:text-[12vw] lg:text-[10vw] leading-none"
+        class="my-4 font-extrabold text-7xl md:text-[12vw] lg:text-[16vw] leading-none"
         style="text-shadow: 0 0 24px rgba(252, 233, 46, 0.2)"
       >
         1,000
@@ -68,33 +68,53 @@
       </div>
     </div>
 
+    <!-- Raised Total -->
+    <div class="text-center">
+      <div class="text-lg text-yellow-300 uppercase font-medium opacity-80">
+        Total Raised
+      </div>
+      <div
+        id="raisedContainer"
+        class="text-[6vw] text-yellow-300 font-semibold"
+      ></div>
+    </div>
+
+    <!-- Timestamp / meta -->
     <div class="fixed bottom-2 left-1/2 -translate-x-1/2 text-xs opacity-55">
       Live from Google Sheets · updates every 15 seconds
     </div>
 
-    <div class="fixed bottom-2 left-2 flex flex-col items-start space-y-1">
+    <!-- Sponsor (conditionally shown) -->
+    <div
+      id="sponsorContainer"
+      class="fixed bottom-2 left-2 flex-col items-start space-y-1 hidden"
+    >
       <span class="text-xs md:text-sm font-medium opacity-60"
         >Sponsored by</span
       >
       <img
-        src="https://social-society.co.uk/cdn/shop/collections/WhatsApp_Image_2024-11-11_at_12.32.13.jpg?v=1731706956"
+        id="sponsorImage"
         alt="Sponsored by"
         class="h-24 md:h-64 opacity-70 hover:opacity-100 transition-opacity duration-300"
       />
     </div>
 
+    <!-- CrossFit Logo -->
     <img
       src="https://images.squarespace-cdn.com/content/v1/65f2f4c3b337df1f3d4d22d4/792b6873-59d0-49b4-a1ec-be2db38472e6/Crossfit+Pioneer+-+White+on+black+lines.jpg?format=2500w"
       alt="CrossFit Pioneer"
       class="fixed bottom-2 right-2 h-24 md:h-64 opacity-70 hover:opacity-100 transition-opacity duration-300"
     />
 
+    <!-- Script -->
     <script>
       const SCRIPT_URL =
         "https://script.google.com/macros/s/AKfycbwyhjfYgAKt9pfBXtciG9e8oQDDOEynlDMC4r0YQKYla7QIm2VLZFTm1k2zDZYx9joJ/exec";
 
       let total = 0,
         displayTotal = 0,
+        raisedTotal = 0,
+        displayedRaised = 0,
         active = [],
         allDistances = [],
         allSettings = [],
@@ -114,6 +134,7 @@
           computeTotals();
           renderRowers();
           updateMeta();
+          updateSponsorAndRaised(data.settings);
           lastRowCount = allDistances.length;
         } catch (e) {
           console.error("Fetch error:", e);
@@ -123,15 +144,12 @@
 
       function buildSpeedLookup(rawSettings = []) {
         speedLookup = {};
-
-        const rows = rawSettings.slice(1); // skip header row
+        const rows = rawSettings.slice(1);
         for (const [label, paceStr] of rows) {
-          const parts = paceStr.split(":");
+          const parts = String(paceStr).split(":");
           const minutes = parseInt(parts[0], 10) || 0;
           const seconds = parseInt(parts[1], 10) || 0;
           const totalSeconds = minutes * 60 + seconds;
-
-          // Convert to metres per second (mps): 500m per pace time
           const mps = 500 / totalSeconds;
           speedLookup[label.trim()] = mps;
         }
@@ -140,9 +158,8 @@
       function computeTotals() {
         if (!allDistances.length) return;
 
-        const dataRows = allDistances.slice(1); // skip header
+        const dataRows = allDistances.slice(1);
         total = 0;
-
         for (const row of dataRows) {
           for (let i = 2; i < row.length; i++) {
             const v = parseFloat(row[i]);
@@ -161,7 +178,6 @@
 
       function renderRowers() {
         const el = document.getElementById("rowers");
-
         if (!active.length) {
           el.textContent = "No rowers active";
           return;
@@ -170,10 +186,10 @@
         el.innerHTML = active
           .map(
             (r) => `
-        <span class="inline-flex items-center gap-1.5 mr-3">
-          <span class="w-2.5 h-2.5 rounded-full ${r.speed.toLowerCase()}"></span>
-          <span class="whitespace-nowrap">R${r.id} ${r.speed}</span>
-        </span>`
+            <span class="inline-flex items-center gap-1.5 mr-3">
+              <span class="w-2.5 h-2.5 rounded-full ${r.speed.toLowerCase()}"></span>
+              <span class="whitespace-nowrap">R${r.id} ${r.speed}</span>
+            </span>`
           )
           .join("");
       }
@@ -187,16 +203,44 @@
         ).textContent = `${time} · ${rows} rows`;
       }
 
+      function updateSponsorAndRaised(settings = []) {
+        const rows = settings.slice(1);
+        let sponsorUrl = "";
+        let raisedValue = 0;
+
+        for (const row of rows) {
+          if (!row || row.length < 2) continue;
+          const key = String(row[0]).trim().toLowerCase();
+          const value = String(row[1]).trim();
+
+          if (key === "sponsor" && value) {
+            sponsorUrl = value;
+          } else if (key === "raised" && !isNaN(parseFloat(value))) {
+            raisedValue = parseFloat(value);
+          }
+        }
+
+        const sponsorContainer = document.getElementById("sponsorContainer");
+        const sponsorImage = document.getElementById("sponsorImage");
+        if (sponsorUrl) {
+          sponsorImage.src = sponsorUrl;
+          sponsorContainer.classList.remove("hidden");
+        } else {
+          sponsorContainer.classList.add("hidden");
+        }
+
+        if (raisedValue !== raisedTotal) {
+          raisedTotal = raisedValue;
+        }
+      }
+
       function tickLogic() {
         let gain = 0;
-
         for (const r of active) {
           const mps = speedLookup[r.speed] || 0;
-          // Apply small random ±5% variation
           const variation = 0.95 + Math.random() * 0.1;
           gain += mps * variation;
         }
-
         total += gain;
       }
 
@@ -204,24 +248,26 @@
         displayTotal += (total - displayTotal) * 0.05;
         document.getElementById("total").textContent =
           Math.floor(displayTotal).toLocaleString();
+
+        displayedRaised += (raisedTotal - displayedRaised) * 0.1;
+        document.getElementById("raisedContainer").textContent =
+          "£" + Math.round(displayedRaised).toLocaleString();
+
         requestAnimationFrame(animate);
       }
 
-      // Init
-      fetchData().then(() =>
-        console.log("Full sheet loaded:", lastRowCount, "rows")
-      );
+      fetchData();
       setInterval(tickLogic, 1000);
       setInterval(fetchData, 15000);
       requestAnimationFrame(animate);
 
-      // Speed badge colors
+      // Speed badge styles
       const style = document.createElement("style");
       style.textContent = `
-    .low { background: #26c281; box-shadow: 0 0 8px #26c281aa; }
-    .med { background: #ffd700; box-shadow: 0 0 8px #ffd700aa; }
-    .high { background: #ff4040; box-shadow: 0 0 8px #ff4040aa; }
-  `;
+        .low { background: #26c281; box-shadow: 0 0 8px #26c281aa; }
+        .med { background: #ffd700; box-shadow: 0 0 8px #ffd700aa; }
+        .high { background: #ff4040; box-shadow: 0 0 8px #ff4040aa; }
+      `;
       document.head.appendChild(style);
     </script>
   </body>
