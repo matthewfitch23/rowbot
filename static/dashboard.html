@@ -120,6 +120,7 @@
         allSettings = [],
         speedLookup = {},
         lastRowCount = 0;
+      lastApiTotal = 0;
 
       async function fetchData() {
         try {
@@ -159,14 +160,23 @@
         if (!allDistances.length) return;
 
         const dataRows = allDistances.slice(1);
-        total = 0;
+        let apiTotal = 0;
+
         for (const row of dataRows) {
           for (let i = 2; i < row.length; i++) {
             const v = parseFloat(row[i]);
-            if (!isNaN(v)) total += v;
+            if (!isNaN(v)) apiTotal += v;
           }
         }
 
+        // If the API total has increased, trust it.
+        // If not, ignore and continue using the simulated total.
+        if (apiTotal > lastApiTotal) {
+          total = apiTotal;
+          lastApiTotal = apiTotal;
+        }
+
+        // Active rower logic unchanged
         active = allSettings
           .slice(1)
           .filter((r) => r[1] === true)
